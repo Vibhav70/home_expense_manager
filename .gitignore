@@ -1,0 +1,93 @@
+Django Project Git Ignore
+
+--------------------------
+
+1. Virtual Environment
+
+--------------------------
+
+Ignore the Python virtual environment folder
+
+This is crucial as dependencies should be managed via requirements.txt
+
+.venv
+venv
+env
+
+--------------------------
+
+2. Python Bytecode / Compiled files
+
+--------------------------
+__pycache__
+*.pyc
+*~$
+pycache/
+
+Coverage data
+
+.coverage
+.tox/
+.mypy_cache/
+.pytest_cache/
+
+--------------------------
+
+3. Operating System Files
+
+--------------------------
+
+.DS_Store
+Thumbs.db
+
+--------------------------
+
+4. Database, Media, and Static Files
+
+--------------------------
+
+SQLite database files (usually named db.sqlite3)
+
+DO NOT commit your local database file
+
+*.sqlite3
+*.db
+.db-
+
+Media and Static files uploaded/collected locally
+
+You should explicitly manage production static/media file handling (e.g., S3/Azure)
+
+/media/
+/static_collected/
+
+--------------------------
+
+5. Environment Variables & Secrets
+
+--------------------------
+
+Critical: Never commit files containing secret keys, API keys, or database credentials.
+
+Replace 'local_settings.py' with the actual filename if you use a different structure
+
+(e.g., .env or settings.ini).
+
+local_settings.py
+.env
+.env.local
+.vscode/settings.json # VS Code specific local settings
+
+--------------------------
+
+6. Build/Frontend Artifacts (if building locally)
+
+--------------------------
+
+Ignore node modules and build artifacts that should not be part of the repository
+
+node_modules/
+dist/
+build/
+npm-debug.log
+yarn-error.log

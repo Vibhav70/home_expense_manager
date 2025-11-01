@@ -1,0 +1,7 @@
+django
+djangorestframework
+django-cors-headers
+python-dotenv
+psycopg2-binary # For PostgreSQL support
+dj-database-url # To parse the DATABASE_URL environment variable
+drf-spectacular
