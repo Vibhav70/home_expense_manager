@@ -50,7 +50,7 @@ const Plus = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width
 
 // --- Global Constants and API Setup ---
 // const API_BASE_URL = "http://localhost:8000/api/";
-const API_BASE_URL = "https://home-expense-manager-vgxi.onrender.com/api/";
+const API_BASE_URL = "https://home-expense-manager-1.onrender.com/api/";
 const PAGES = {
     DASHBOARD: 'Dashboard',
     TENANTS: 'Tenants',
