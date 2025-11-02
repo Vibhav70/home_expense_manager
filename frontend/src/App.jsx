@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from "axios";
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+// import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 
 // Load Tailwind CSS CDN explicitly for the Canvas environment
 const TAILWIND_CSS = `
@@ -46,7 +46,7 @@ const Plus = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width
 
 
 // Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+// ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 // --- Global Constants and API Setup ---
 // const API_BASE_URL = "http://localhost:8000/api/";
