@@ -50,7 +50,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 // --- Global Constants and API Setup ---
 // const API_BASE_URL = "http://localhost:8000/api/";
-const API_BASE_URL = window.API_BASE_URL || "http://localhost:8000/api/";
+const API_BASE_URL = "https://home-expense-manager-vgxi.onrender.com/api/";
 const PAGES = {
     DASHBOARD: 'Dashboard',
     TENANTS: 'Tenants',
