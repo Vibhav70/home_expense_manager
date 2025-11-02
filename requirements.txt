@@ -6,4 +6,4 @@ psycopg2-binary
 dj-database-url
 drf-spectacular
 gunicorn
-django_filters
+django-filters
