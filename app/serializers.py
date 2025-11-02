@@ -1,9 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from django.db.models import Q
-from .models import Tenant, ElectricityReading, ExpenseCategory, Expense
+from .models import Tenant, ElectricityReading  , ExpenseCategory, Expense
 
-# Get the User model for the new UserSerializer
+# Get the User model
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
@@ -28,10 +27,19 @@ class UserSerializer(serializers.ModelSerializer):
 class TenantSerializer(serializers.ModelSerializer):
     """
     Serializer for the Tenant model.
+    The 'owner' field is made read-only as it is set by the request.user in the ViewSet.
     """
+    # The 'owner' field is automatically populated by the view, so we make it read-only
+    owner_username = serializers.ReadOnlyField(source='owner.username')
+
     class Meta:
         model = Tenant
-        fields = '__all__'
+        fields = [
+            'id', 'owner', 'owner_username', 'name', 'room_no', 'contact_no', 
+            'joining_date', 'leaving_date', 'rent'
+        ]
+        # Crucial: Mark owner as read-only so the serializer doesn't require it in POST/PUT data.
+        read_only_fields = ['owner'] # <--- THE FIX
 
 class ElectricityReadingSerializer(serializers.ModelSerializer):
     """
@@ -52,47 +60,7 @@ class ElectricityReadingSerializer(serializers.ModelSerializer):
         # Make auto-calculated fields read-only
         read_only_fields = ['total_units', 'calculated_bill']
 
-    
-    def to_internal_value(self, data):
-        """
-        Populate the previous_reading field if it is missing or explicitly set to 0,
-        by looking up the last reading for the given tenant/month/year combination.
-        """
-        # Call the base method first to validate basic field types
-        validated_data = super().to_internal_value(data)
-        
-        # Check if we are creating a new record and if previous_reading is 0 
-        # (or missing/None, which is handled by super().to_internal_value)
-        # We check the raw data for 'previous_reading' to allow the user to override it.
-        # This is primarily for POST requests (new creation).
-        raw_previous_reading = data.get('previous_reading')
-        
-        # We only want to auto-calculate if the user explicitly provided '0' or left it out
-        # AND if we have enough info (tenant, month, year)
-        if (raw_previous_reading == 0 or raw_previous_reading is None) and validated_data.get('tenant'):
-            try:
-                tenant = validated_data['tenant']
-                month = validated_data.get('month')
-                year = validated_data.get('year')
 
-                if month and year:
-                    # Look up the latest reading for this tenant before the current period
-                    last_reading = ElectricityReading.objects.filter(
-                        tenant=tenant
-                    ).filter(
-                        Q(year__lt=year) | Q(year=year, month__lt=month)
-                    ).order_by('-year', '-month').first()
-
-                    if last_reading:
-                        # Override the previous_reading with the last month's current reading
-                        validated_data['previous_reading'] = last_reading.current_reading
-            except Exception:
-                # Silently fail if lookup causes an error
-                pass
-        
-        return validated_data
-
-    
     def validate(self, data):
         """
         Custom validation to ensure month is between 1 and 12.
@@ -103,9 +71,6 @@ class ElectricityReadingSerializer(serializers.ModelSerializer):
                 {"month": "Month must be an integer between 1 and 12."}
             )
 
-        # The model's save method handles the reading value consistency and
-        # the UniqueConstraint handles the tenant/month/year uniqueness.
-
         return data
 
 
@@ -115,9 +80,13 @@ class ExpenseCategorySerializer(serializers.ModelSerializer):
     """
     Serializer for the ExpenseCategory model.
     """
+    # The 'owner' field is automatically populated by the view, so we make it read-only
+    owner_username = serializers.ReadOnlyField(source='owner.username')
+
     class Meta:
         model = ExpenseCategory
-        fields = '__all__'
+        fields = ['id', 'owner', 'owner_username', 'name', 'description']
+        read_only_fields = ['owner'] # <--- THE FIX
 
 class ExpenseSerializer(serializers.ModelSerializer):
     """
@@ -125,10 +94,13 @@ class ExpenseSerializer(serializers.ModelSerializer):
     """
     # Display the category name instead of just the ID
     category_name = serializers.ReadOnlyField(source='category.name')
+    # The 'owner' field is automatically populated by the view, so we make it read-only
+    owner_username = serializers.ReadOnlyField(source='owner.username')
 
     class Meta:
         model = Expense
         fields = [
-            'id', 'category', 'category_name', 'amount', 'date',
+            'id', 'owner', 'owner_username', 'category', 'category_name', 'amount', 'date',
             'description', 'month', 'year'
         ]
+        read_only_fields = ['owner'] # <--- THE FIX

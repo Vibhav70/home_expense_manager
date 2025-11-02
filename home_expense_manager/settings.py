@@ -9,7 +9,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret-key-for-dev')
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = os.getenv('DEBUG', 'False') == 'False'
 
 ALLOWED_HOSTS = ['*']
 
@@ -26,7 +26,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'drf_spectacular',
-    'rest_framework.authtoken', # <-- ADDED for token auth
+    'rest_framework.authtoken', # For token auth
+    'django_filters',           # <-- ADDED for ViewSet filtering
 
     # Local apps
     'app',
@@ -63,20 +64,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'home_expense_manager.wsgi.application'
 
-# Database
 DATABASE_URL = os.getenv('DATABASE_URL')
-if DATABASE_URL:
-    DATABASES = {
-        'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
-    }
-else:
-    # Default to SQLite if DATABASE_URL is not set
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+DATABASES = {
+'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=int(os.environ.get('DB_CONN_MAX_AGE', 600)),
+        ssl_require=True)
+}
+
+# --------------------------------------------------------
 
 
 # Password validation
@@ -102,13 +98,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Django REST Framework Configuration
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        # Sets a high security standard: requires authentication for almost all actions
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        # Use token authentication as the primary method
         'rest_framework.authentication.TokenAuthentication',
-        # Session authentication for browsable API/Admin interface
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_FILTER_BACKENDS': (
@@ -118,10 +111,13 @@ REST_FRAMEWORK = {
 }
 
 # CORS Configuration (from .env)
+# This is crucial for your React frontend to talk to your Django backend.
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # React/Vite development server
-    "http://127.0.0.1:5173",  # Safety measure for 127.0.0.1 access
+    "http://localhost:5173",    # React/Vite development server
+    "http://127.0.0.1:5173",    # Safety measure for 127.0.0.1 access
+    # Add your deployed Supabase URL here when you deploy your frontend:
+    # "https://[YOUR-SUPABASE-FRONTEND].vercel.app" 
 ]
 
 # DRF Spectacular Configuration
@@ -130,7 +126,6 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API for managing tenants, readings, and household expenses.',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
-    # Adding security schemes for token auth in docs
     'SECURITY': [
         {
             'TokenAuth': {

@@ -49,7 +49,8 @@ const Plus = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 // --- Global Constants and API Setup ---
-const API_BASE_URL = "http://localhost:8000/api/";
+// const API_BASE_URL = "http://localhost:8000/api/";
+const API_BASE_URL = window.API_BASE_URL || "http://localhost:8000/api/";
 const PAGES = {
     DASHBOARD: 'Dashboard',
     TENANTS: 'Tenants',
@@ -192,7 +193,7 @@ const InputField = ({ label, name, type = 'text', value, onChange, placeholder, 
             placeholder={placeholder}
             required={required}
             disabled={disabled}
-            className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 transition duration-150"
+            className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 transition duration-150"
         />
     </div>
 );
@@ -398,7 +399,7 @@ const RegisterForm = ({ setCurrentPage, apiClient, addToast }) => {
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
             <div className="max-w-md w-full p-8 space-y-8 bg-white shadow-2xl rounded-xl">
                 <h2 className="text-3xl font-extrabold text-gray-900 text-center">
-                    Create Tenant Account
+                    Create New Account
                 </h2>
                 {message && <div className="bg-green-100 text-green-700 p-3 rounded-lg text-sm mb-4">{message}</div>}
                 {error && <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm mb-4">{error}</div>}
@@ -524,7 +525,7 @@ const ReadingForm = ({ tenants, reading, onSuccess, onClose, apiClient, addToast
     
     const initialForm = useMemo(() => reading || {
         tenant: defaultTenant || '', month: today.getMonth() + 1, year: today.getFullYear(),
-        previous_reading: 0, current_reading: '', rate_per_unit: 6.00, is_paid: false
+        previous_reading: 0, current_reading: '', rate_per_unit: 9.00, is_paid: false
     }, [reading, defaultTenant]);
 
     const [formData, setFormData] = useState(initialForm);
@@ -736,7 +737,7 @@ const ExpenseForm = ({ categories, expense, onSuccess, onClose, apiClient, addTo
                     value={formData.description}
                     onChange={handleChange}
                     disabled={!isLandlord}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                    className="w-full px-3 py-2 border bg-white border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
                 ></textarea>
             </div>
             <div className="mt-6 flex justify-end space-x-3">
@@ -1337,12 +1338,18 @@ const App = () => {
 
     // Effect to check auth status and redirect
     useEffect(() => {
+        const isAuthPage = currentPage === PAGES.LOGIN || currentPage === PAGES.REGISTER;
+
         if (token) {
-            if (currentPage === PAGES.LOGIN || currentPage === PAGES.REGISTER) {
+            // User is authenticated: redirect them away from login/register
+            if (isAuthPage) {
                 setCurrentPage(PAGES.DASHBOARD);
             }
         } else {
-            setCurrentPage(PAGES.LOGIN);
+            // User is NOT authenticated: redirect them to login ONLY if they are on a protected page.
+            if (!isAuthPage) {
+                setCurrentPage(PAGES.LOGIN);
+            }
         }
     }, [token, currentPage]);
 

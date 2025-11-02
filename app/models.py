@@ -3,8 +3,10 @@ from django.db import models
 from django.db.models import UniqueConstraint, Q
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-
 from django.core.validators import MinValueValidator, MaxValueValidator 
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 # Defensive measure to help Django's system check avoid circular import confusion
 class SentinelManager(models.Manager):
@@ -12,6 +14,8 @@ class SentinelManager(models.Manager):
 
 class Tenant(models.Model):
     """Stores tenant information."""
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_tenants')
+
     name = models.CharField(max_length=100)
     room_no = models.CharField(max_length=10, unique=True)
     contact_no = models.CharField(max_length=20)
@@ -19,13 +23,26 @@ class Tenant(models.Model):
     leaving_date = models.DateField(null=True, blank=True)
     rent = models.DecimalField(max_digits=10, decimal_places=2)
 
+    class Meta:
+        # Ensure room_no is unique ONLY per owner (Landlord)
+        constraints = [
+            UniqueConstraint(fields=['owner', 'room_no'], name='unique_room_per_owner')
+        ]
+
     def __str__(self):
         return f"{self.name} ({self.room_no})"
 
 class ExpenseCategory(models.Model):
     """Categories for tracking household expenses."""
+
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_categories')
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['owner', 'name'], name='unique_category_per_owner')
+        ]
 
     def __str__(self):
         return self.name
@@ -69,25 +86,18 @@ class ElectricityReading(models.Model):
         
         # 2. Check for automatic previous reading update (only on create)
         if not self.pk:
-            # --- START FIX for reliable previous reading lookup ---
-            # Attempt to find the latest reading for this tenant that occurred 
-            # *before* the current month/year being created.
             try:
                 last_reading = ElectricityReading.objects.filter(
                     tenant=self.tenant
                 ).filter(
-                    # Filters for all readings with a year less than current year,
-                    # OR readings in the same year but with a month less than the current month.
+
                     Q(year__lt=self.year) | Q(year=self.year, month__lt=self.month)
-                ).order_by('-year', '-month').first() # Order by most recent first and take the top one
+                ).order_by('-year', '-month').first() 
 
                 if last_reading:
-                    # Set the previous_reading to the last month's current reading
                     self.previous_reading = last_reading.current_reading
             except Exception:
-                # If no previous reading exists (or any other error), keep the user-provided or default value
                 pass
-            # --- END FIX ---
                 
         # 3. If a new month's reading is being created (pk is None), ensure is_paid is False
         if not self.pk:
@@ -100,6 +110,8 @@ class ElectricityReading(models.Model):
 
 class Expense(models.Model):
     """Stores household expenses linked to a category."""
+
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_expenses', default=None, null=True)
     # CHANGING related_name='expenses' to related_name='category_expenses' to resolve the E304/E305 clash
     category = models.ForeignKey(ExpenseCategory, on_delete=models.SET_NULL, null=True, related_name='category_expenses')
     amount = models.DecimalField(max_digits=10, decimal_places=2)

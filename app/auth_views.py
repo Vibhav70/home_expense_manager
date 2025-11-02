@@ -9,11 +9,11 @@ from django.db import IntegrityError
 from django.http import Http404
 
 User = get_user_model()
-
 class RegisterView(APIView):
     """
     POST /api/register/
-    Creates a new user account (Tenant).
+    Creates a new Landlord user account.
+    The new user is automatically set as is_superuser for immediate Landlord privileges.
     Input: { "username": "user", "email": "user@example.com", "password": "strongpassword" }
     Permissions: AllowAny
     """
@@ -31,12 +31,22 @@ class RegisterView(APIView):
             )
 
         try:
-            # Create a regular user account
-            user = User.objects.create_user(username=username, email=email, password=password)
+            # 1. Create the user normally
+            user = User.objects.create_user(
+                username=username, 
+                email=email, 
+                password=password,
+            )
+            
+            # 2. Grant "Landlord" privileges explicitly after creation
+            # This is done by setting the is_superuser and is_staff flags.
             user.is_active = True
+            user.is_superuser = True
+            user.is_staff = True
             user.save()
+            
             return Response(
-                {"detail": "User created successfully. You can now login."},
+                {"detail": "Landlord account created successfully. You can now login."},
                 status=status.HTTP_201_CREATED
             )
         except IntegrityError:
@@ -45,8 +55,11 @@ class RegisterView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
+            # Catch other potential database or creation errors
+            error_message = f"Registration failed due to an unexpected error: {str(e)}"
+            print(error_message) # Print to terminal for server-side debugging
             return Response(
-                {"detail": f"An unexpected error occurred: {str(e)}"},
+                {"detail": error_message},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -72,7 +85,7 @@ class LoginView(APIView):
             return Response({
                 "token": token.key,
                 "username": user.username,
-                "is_superuser": user.is_superuser,
+                "is_superuser": user.is_superuser, # This will now be TRUE for all new registered users
             }, status=status.HTTP_200_OK)
         else:
             return Response(

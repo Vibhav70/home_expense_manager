@@ -2,6 +2,6 @@ django
 djangorestframework
 django-cors-headers
 python-dotenv
-psycopg2-binary # For PostgreSQL support
-dj-database-url # To parse the DATABASE_URL environment variable
+psycopg2-binary 
+dj-database-url
 drf-spectacular
