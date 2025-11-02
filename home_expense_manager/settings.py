@@ -115,9 +115,21 @@ REST_FRAMEWORK = {
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",    # React/Vite development server
-    "http://127.0.0.1:5173",    # Safety measure for 127.0.0.1 access
+    "http://127.0.0.1:5173", 
+    "https://home-expense-manager.vercel.app",   # Safety measure for 127.0.0.1 access
     # Add your deployed Supabase URL here when you deploy your frontend:
     # "https://[YOUR-SUPABASE-FRONTEND].vercel.app" 
+]
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
 ]
 
 # DRF Spectacular Configuration
